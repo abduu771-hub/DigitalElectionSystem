@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Results</title>
+    <style>
+        :root {
+            --primary: #4e44ce;
+            --secondary: #6e8efb;
+            --dark: #2c3e50;
+            --light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .logo { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .winner {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+
+        .candidate-result {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .candidate-result.winner-highlight {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">🏆 Election Results</div>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/results">Results</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="winner" id="winner-message">Loading results...</div>
+        <div id="results-list"></div>
+    </main>
+
+    <script>
+ async function loadResults() {
+    try {
+        const response = await fetch('/results/data');
+
+        if (!response.ok) {
+            throw new Error('Failed to load results');
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            document.getElementById('winner-message').textContent = "Error: " + result.error;
+            return;
+        }
+
+        const data = result.candidates;
+        if (!Array.isArray(data) || data.length === 0) {
+            document.getElementById('winner-message').textContent = "No candidates found.";
+            return;
+        }
+
+        const maxVotes = Math.max(...data.map(c => c.votes));
+        const winners = data.filter(c => c.votes === maxVotes);
+        const winnerNames = winners.map(w => w.name).join(", ");
+
+        document.getElementById('winner-message').textContent = `Winner${winners.length > 1 ? 's' : ''}: ${winnerNames}`;
+
+        const resultsList = document.getElementById('results-list');
+        resultsList.innerHTML = '';
+
+        data.forEach(candidate => {
+            const div = document.createElement('div');
+            div.className = 'candidate-result' + (candidate.votes === maxVotes ? ' winner-highlight' : '');
+            div.innerHTML = `
+                <span>${candidate.name}</span>
+                <span>${candidate.votes} votes</span>
+            `;
+            resultsList.appendChild(div);
+        });
+
+    } catch (err) {
+        console.error("Failed to load results:", err);
+        document.getElementById('winner-message').textContent = "Failed to load results.";
+    }
+}
+
+window.addEventListener('load', loadResults);
+
+
+
+
+        
+    </script>
+
+</body>
+</html>
